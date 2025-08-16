@@ -1,12 +1,18 @@
 mod curve_to_ed;
+mod encryption_aead;
 mod private_key;
 
+use std::str::from_utf8;
+
 use curve_to_ed::{generate_signature, verify_hash};
+use encryption_aead::encrypt;
 use hkdf::Hkdf;
 use private_key::PrivateKey;
 use rand_core::OsRng;
 use sha2::Sha256;
 use x25519_dalek::{PublicKey, ReusableSecret};
+
+use crate::encryption_aead::decrypt;
 
 fn main() {
     //alice keys
