@@ -6,9 +6,10 @@ edition = "2024"
 [dependencies]
 rand_core = "0.6.4"
 rand = {version = "0.8.5", features = ["std"]}
-x25519-dalek = {version = "2.0.1",features = ["static_secrets"]}
+x25519-dalek = {version = "2.0.1",features = ["static_secrets","reusable_secrets"]}
 ed25519-dalek = {version = "2.2.0", features = ["rand_core"]}
 curve25519-dalek = "4.1.3"
 sha2 = "0.10.9"
 hex = "0.4.3"
 subtle = "2.6.1"
+hkdf = "0.12.4"
