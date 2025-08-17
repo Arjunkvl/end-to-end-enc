@@ -1,24 +1,21 @@
 mod curve_to_ed;
 mod encryption_aead;
+mod key_agree;
 mod private_key;
 
-use std::str::from_utf8;
-
 use curve_to_ed::{generate_signature, verify_hash};
-use encryption_aead::encrypt;
-use hkdf::Hkdf;
+use key_agree::calc_send_root_key;
 use private_key::PrivateKey;
 use rand_core::OsRng;
-use sha2::Sha256;
-use x25519_dalek::{PublicKey, ReusableSecret};
+use x25519_dalek::{PublicKey, StaticSecret};
 
-use crate::encryption_aead::decrypt;
+use crate::key_agree::calc_recv_root_key;
 
 fn main() {
     //alice keys
     let alice_idk = PrivateKey::new();
     let alice_idk_pub = PublicKey::from(&alice_idk);
-    let alice_eph = ReusableSecret::random_from_rng(&mut OsRng);
+    let alice_eph = StaticSecret::random_from_rng(&mut OsRng);
     let alice_eph_pub = PublicKey::from(&alice_eph);
 
     //bobs keys...
@@ -33,34 +30,10 @@ fn main() {
         &[bob_spk_pub.as_bytes()],
         &bob_spk_sig,
     ) {
-        //alice calculations
-        let dh1 = alice_idk.diffie_hellman(&bob_spk_pub);
-        let dh2 = alice_eph.diffie_hellman(&bob_idk_pub);
-        let dh3 = alice_eph.diffie_hellman(&bob_spk_pub);
-
-        let mut ikm = [0u8; 96];
-        ikm[..32].copy_from_slice(&dh1.to_bytes()[..]);
-        ikm[32..64].copy_from_slice(&dh2.to_bytes()[..]);
-        ikm[64..96].copy_from_slice(&dh3.to_bytes()[..]);
-
-        let hk = Hkdf::<Sha256>::new(None, &ikm);
-        let mut root_key = [0u8; 32];
-        hk.expand(&[], &mut root_key).expect("somthig is not right");
-        println!("{:?}", hex::encode(root_key));
+        let key = calc_send_root_key(alice_idk, bob_idk_pub, alice_eph, bob_spk_pub);
+        println!("{:?}", hex::encode(key));
     }
 
-    //bobs calculations;
-    let dh1 = bob_spk.diffie_hellman(&alice_idk_pub);
-    let dh2 = bob_idk.diffie_hellman(&alice_eph_pub);
-    let dh3 = bob_spk.diffie_hellman(&alice_eph_pub);
-
-    let mut ikm = [0u8; 96];
-    ikm[..32].copy_from_slice(&dh1.to_bytes()[..]);
-    ikm[32..64].copy_from_slice(&dh2.to_bytes()[..]);
-    ikm[64..96].copy_from_slice(&dh3.to_bytes()[..]);
-
-    let hk = Hkdf::<Sha256>::new(None, &ikm);
-    let mut root_key = [0u8; 32];
-    hk.expand(&[], &mut root_key).expect("somthig is not right");
-    println!("{:?}", hex::encode(root_key));
+    let key = calc_recv_root_key(bob_idk, alice_idk_pub, alice_eph_pub, bob_spk);
+    println!("{:?}", hex::encode(key));
 }

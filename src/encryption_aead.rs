@@ -1,4 +1,4 @@
-use aes_gcm::{AeadCore, Aes256Gcm, Key, KeyInit, Nonce, aead::Aead};
+use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce, aead::Aead};
 use hkdf::Hkdf;
 use sha2::Sha256;
 
